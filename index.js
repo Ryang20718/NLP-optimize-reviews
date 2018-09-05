@@ -48,6 +48,9 @@ authorize(content,readAllCustomers).then(function(value) {//value is an array
 });
 
 
+
+
+
 ///CSV FUNCTIONS////////
 
 
@@ -62,33 +65,51 @@ resolve(jsonObj);
 });
 
 
-csvPromise.then(function(value) {
-   for(var i = 0; i < value.length; i++){
-       txtArray.push(value[i].comments);
-   }
- });
-
 ///AWS functions-Comprehend/////
 
-AWS.config.update({
-  accessKeyId: process.env.AWSKEY, 
-  secretAccessKey:process.env.AWSSECRET, 
-  region: "us-west-2"});
+function processComment(){
 
-var comprehend = new AWS.Comprehend();
-comprehend.batchDetectDominantLanguage(params, function (err, data) {
-  if (err) console.log(err, err.stack); // an error occurred
-  else     console.log(data);           // successful response
+csvPromise.then(function(value) {
+   for(var i = 0; i < value.length; i++){
+       var comment = value[i].comments;
+       analyze(comment);
+   }
 });
+}
 
-var params = {
-  LanguageCode: 'en', /* required */
-  Text: "Weekend travel inspiration. Where will your next adventure be?" /* required */
-};
-comprehend.detectSentiment(params, function(err, data) {
-  if (err) console.log(err, err.stack); // an error occurred
-  else     console.log(data);           // successful response
-});
+function analyze(text){
+    AWS.config.update({
+    accessKeyId: process.env.AWSKEY, 
+    secretAccessKey:process.env.AWSSECRET, 
+    region: "us-west-2"});
+
+    var comprehend = new AWS.Comprehend();
+    
+    var params = {
+      LanguageCode: 'en', /* required */
+      Text: text /* required */
+    };
+    comprehend.detectSentiment(params, function(err, data) {
+            var jsonString = JSON.stringify(data);
+            var jsonObj = JSON.parse(jsonString);
+            console.log(jsonObj.SentimentScore.Mixed);
+            console.log(String(text));
+            console.log(jsonObj.Sentiment);
+            insert(jsonObj.SentimentScore.Mixed,text,jsonObj.Sentiment);//insert into database  
+    });
+}
+processComment();
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -97,6 +118,10 @@ comprehend.detectSentiment(params, function(err, data) {
 
 /////AWS DYNAMO//////
 
+
+
+
+function createTable(){
 var dynamo = require('dynamodb');
 var tableName = "Vessel-NLP";
 
@@ -104,9 +129,7 @@ dynamo.AWS.config.update({accessKeyId: process.env.AWSKEY,
                           secretAccessKey:process.env.AWSSECRET, 
                           region: "us-west-1"});
 var dynamodb = new AWS.DynamoDB();
-
-
-function createTable(){
+    
 var params = {
     TableName : tableName,
     KeySchema: [       
@@ -122,6 +145,7 @@ var params = {
 };
 
 dynamodb.createTable(params, function(err, data) {
+    
     if (err) {
         console.error("Unable to create table. Error JSON:", JSON.stringify(err, null, 2));
     } else {
@@ -131,6 +155,13 @@ dynamodb.createTable(params, function(err, data) {
 };
 
 function insert(random_num, cText,rate){//insert or update function
+var dynamo = require('dynamodb');
+var tableName = "Vessel-NLP";
+
+dynamo.AWS.config.update({accessKeyId: process.env.AWSKEY, 
+                          secretAccessKey:process.env.AWSSECRET, 
+                          region: "us-west-1"});
+var dynamodb = new AWS.DynamoDB();
 var docClient = new AWS.DynamoDB.DocumentClient();
 var params = {
     TableName:tableName,
@@ -150,8 +181,16 @@ docClient.put(params, function(err, data) {
 });
 };
 
-function scan(){
 
+
+function scan(){
+var dynamo = require('dynamodb');
+var tableName = "Vessel-NLP";
+
+dynamo.AWS.config.update({accessKeyId: process.env.AWSKEY, 
+                          secretAccessKey:process.env.AWSSECRET, 
+                          region: "us-west-1"});
+var dynamodb = new AWS.DynamoDB();
 var docClient = new AWS.DynamoDB.DocumentClient();
 var params = {
     TableName: tableName,
@@ -181,6 +220,10 @@ function onScan(err, data) {
     }
 }
 };
+
+
+
+
 
 ///////////// Start the Server /////////////
 

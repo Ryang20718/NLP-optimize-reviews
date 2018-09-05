@@ -1,34 +1,13 @@
-# Pre-Order Shopify
+# Natural Language Processing Reviews
 ## Features
-Front-End for Inventory Shopify Application
-#### Shopify E-commerce Integration
+Ecommerce Integration
+- Takes in Comments Via CSV from Facebook,instagram and analyzes the customer's language and sentiment to determine customer's view of Company
 
-- Utilized Shopify's Oauth2 and REST API to authenticate, read and write data from Shopify to store in database.
+#### AWS DynamoDB
 
-#### Mailchimp
+- Stores Comments and Sentiment Analysis online via aws
 
-- Writes to Spreadsheet and automates collection of emails of customers wanting to be notified of products currently out of stock
-- Automates creation of CSV file for customers wanting to be notified for MailChimp Integration, allowing bulk update of new customers.
+#### AWS Comprehend
 
-#### Pre-Order Products
+- Natural Language Processing to analyze sentiment via ever learning AWS model
 
-- Queries Products that are out of stock and writes these products to a database whenever a customer displays interest in buying the product
-- Automates Gathering emails and notifying customers of when products will be in stock. Increases E-commerce customer conversion rate and customer signup rate.
-
-#### Firestore
-
-- Designed NoSQL Database for hashing and efficiently querying data of O(1) time.
-
-#### Npm 
-First clone and install all the dependencies
-
-`$ npm-install-all index.js`=> [source here](https://www.npmjs.com/package/npm-install-all "source here")
-
-#### Install Heroku
-Follow through the steps of setting up Heroku and configure the values so the code can access it => [Can be found here](https://devcenter.heroku.com/articles/config-vars "Can be found here")
-
-#### Sample 
-![](/public/frontend.png)
-
-#### Backend 
-[Backend Link](https://github.com/Ryang20718/Inventory "Backend Link")

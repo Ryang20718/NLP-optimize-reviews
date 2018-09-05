@@ -34,17 +34,21 @@ app.use(cors())
 
 
 ///////////// Route Handlers /////////////
-
-app//homepage
-  .use(express.static(path.join(__dirname, 'public')))
-  .set('views', path.join(__dirname, 'views'))
-  .set('view engine', 'ejs')
-  .get('/', (req, res) => res.render('pages/index'))
-
 app.get('/process', cors(), function(req, res){//analyzes comments on spreadsheet
 processComment();
 });
 
+app//homepage renders dynamodb
+  .use(express.static(path.join(__dirname, 'public')))
+  .set('views', path.join(__dirname, 'views'))
+  .set('view engine', 'ejs')
+  .get('/', function(req, res){//analyzes comments on spreadsheet
+   scan.then(function(value) {
+    res.render('pages/index', {
+        ratingArray : value,
+    });
+   });
+   });
 
 
 
@@ -165,7 +169,12 @@ docClient.put(params, function(err, data) {
 
 
 
-function scan(){
+var scan = new Promise(function(resolve, reject) {  
+    
+var ratingArray = [];
+var pos = 0;//pos count
+var neg = 0;//neg count
+    
 var dynamo = require('dynamodb');
 var tableName = "Vessel-NLP";
 
@@ -187,11 +196,14 @@ function onScan(err, data) {
     } else {
         // print all the movies
         console.log("Scan succeeded.");
-        data.Items.forEach(function(rating) {
-           console.log(
-                rating.num);
+        data.Items.forEach(function(indComment) {
+           if(indComment.rating == 'POSITIVE'){
+               pos++;
+           }
+            else{
+                neg++;
+            }
         });
-
         // continue scanning if we have more movies, because
         // scan can retrieve a maximum of 1MB of data
         if (typeof data.LastEvaluatedKey != "undefined") {
@@ -200,10 +212,12 @@ function onScan(err, data) {
             docClient.scan(params, onScan);
         }
     }
+    ratingArray.push(pos);
+    ratingArray.push(neg);
+    resolve(ratingArray);
 }
-};
 
-
+});
 
 
 

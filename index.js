@@ -51,6 +51,49 @@ authorize(content,readAllCustomers).then(function(value) {//value is an array
 ///CSV FUNCTIONS////////
 
 
+var csvPromise = new Promise(function(resolve, reject) {     
+const csvFilePath='./out.csv'
+const csv=require('csvtojson')
+csv()
+.fromFile(csvFilePath)
+.then((jsonObj)=>{
+resolve(jsonObj);
+})
+});
+
+
+csvPromise.then(function(value) {
+   for(var i = 0; i < value.length; i++){
+       txtArray.push(value[i].comments);
+   }
+ });
+
+///AWS functions-Comprehend/////
+
+AWS.config.update({
+  accessKeyId: process.env.AWSKEY, 
+  secretAccessKey:process.env.AWSSECRET, 
+  region: "us-west-2"});
+
+var comprehend = new AWS.Comprehend();
+comprehend.batchDetectDominantLanguage(params, function (err, data) {
+  if (err) console.log(err, err.stack); // an error occurred
+  else     console.log(data);           // successful response
+});
+
+var params = {
+  LanguageCode: 'en', /* required */
+  Text: "Weekend travel inspiration. Where will your next adventure be?" /* required */
+};
+comprehend.detectSentiment(params, function(err, data) {
+  if (err) console.log(err, err.stack); // an error occurred
+  else     console.log(data);           // successful response
+});
+
+
+
+
+
 
 /////AWS DYNAMO//////
 
@@ -87,13 +130,14 @@ dynamodb.createTable(params, function(err, data) {
 });
 };
 
-function insert(random_num, cText){//insert or update function
+function insert(random_num, cText,rate){//insert or update function
 var docClient = new AWS.DynamoDB.DocumentClient();
 var params = {
     TableName:tableName,
     Item:{
         "num": random_num,
         "comment":cText,
+        "rating":rate,
     }
 };
 console.log("Adding a new item...");
@@ -105,57 +149,12 @@ docClient.put(params, function(err, data) {
     }
 });
 };
-insert(1,"testte");
 
-/*
-var dynamo = require('dynamodb');
-var tableName = "Vessel-NLP";
+function scan(){
 
-dynamo.AWS.config.update({accessKeyId: process.env.AWSKEY, 
-                          secretAccessKey:process.env.AWSSECRET, 
-                          region: "us-west-1"});
-
-var dynamodb = new AWS.DynamoDB();
-
-
-
-////////CREATE TABLE
-function createTable(){
-var params = {
-    TableName : tableName,
-    KeySchema: [       
-        { AttributeName: "num", KeyType: "HASH"},  //Partition Key
-    ],
-    AttributeDefinitions: [       
-        { AttributeName: "num", AttributeType: "S" }
-    ],
-
-    ProvisionedThroughput: {       
-        ReadCapacityUnits: 10, 
-        WriteCapacityUnits: 10
-    }
-    }
-};
-
-createTable();
-/*
-function insert(random_num, cText){//insert or update function
-
-var docClient = new AWS.DynamoDB.DocumentClient();//way to insert
-var params = {
-  TableName: tableName,
-  Item:{
-    "num": random_num,//email
-    "text:" cText,
-  }
-};
-    
-///SCAN ALL ITEMS
-function scanALl(){
 var docClient = new AWS.DynamoDB.DocumentClient();
-
 var params = {
-    TableName: tableName
+    TableName: tableName,
 };
 
 console.log("Scanning table.");
@@ -167,7 +166,10 @@ function onScan(err, data) {
     } else {
         // print all the movies
         console.log("Scan succeeded.");
-        console.log(data.Items);
+        data.Items.forEach(function(rating) {
+           console.log(
+                rating.num);
+        });
 
         // continue scanning if we have more movies, because
         // scan can retrieve a maximum of 1MB of data
@@ -179,8 +181,6 @@ function onScan(err, data) {
     }
 }
 };
-*/
-
 
 ///////////// Start the Server /////////////
 

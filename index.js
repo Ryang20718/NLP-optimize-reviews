@@ -41,10 +41,8 @@ app//homepage
   .set('view engine', 'ejs')
   .get('/', (req, res) => res.render('pages/index'))
 
-app.get('/getAllCustomersSheets', cors(), function(req, res){//shows all customers email on spreadsheet
-authorize(content,readAllCustomers).then(function(value) {//value is an array
-    res.send(value);
-});
+app.get('/process', cors(), function(req, res){//analyzes comments on spreadsheet
+processComment();
 });
 
 
@@ -98,22 +96,6 @@ function analyze(text){
             insert(jsonObj.SentimentScore.Mixed,text,jsonObj.Sentiment);//insert into database  
     });
 }
-processComment();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 /////AWS DYNAMO//////

@@ -11,13 +11,19 @@
 <div class="jumbotron text-center">
   <div class="container">
 
-    <h1>Customers interest in Products</h1>
+    <h1>Vessel - Reviews</h1>
   </div>
 </div>
     
 
- <div class="chart-container" style="position: relative; height:15vh; width:50vw; margin:auto; display:block;">   
- <canvas id="myChart"></canvas>  
+ <div class="chart-container" style="position: relative; height:14vh; width:40vw; margin:auto; display:block;float:left">   
+<h1 style = "text-align:center">Facebook Reviews</h1>
+ <canvas id="myChart">Facebook Reviews</canvas>  
+</div>
+<div></div>  
+ <div class="chart-container" style="position: relative;height:14vh; width:40vw; margin:auto; display:block;float:right;">   
+<h1 style = "text-align:center">Instagram Comments</h1>
+ <canvas id="instagramChart"></canvas>  
 </div>
     
   
@@ -41,6 +47,25 @@ var myChart = new Chart(ctx, {
     }
 });
 
+
+    
+//Chart for Insta
+//data contains 2 arrays, first is the names, second is quantities
+var ctx = document.getElementById('instagramChart').getContext('2d');
+var colors = ['green', 'red', 'grey'];
+
+var myChart = new Chart(ctx, {
+    type: 'pie',
+    data: {
+        labels: ['positive ratings','negative ratings','neutral ratings/ questions'],
+        datasets: [{
+            label: '# ratings',
+            data: [<%= instagramArray %>],
+            backgroundColor: colors,
+            borderWidth: 1
+        }]
+    }
+});
 
 
 </script>

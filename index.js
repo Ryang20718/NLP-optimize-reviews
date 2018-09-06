@@ -35,9 +35,15 @@ app.use(cors())
 
 
 ///////////// Route Handlers /////////////
-app.get('/process', cors(), function(req, res){//analyzes comments on spreadsheet
+app.get('/process', cors(), function(req, res){//analyzes comments on csv for facebook
 processComment();
 });
+
+app.get('/processInsta', cors(), function(req, res){//analyzes comments on csv for instagram
+processCommentInsta();
+});
+
+
 
 app//homepage renders dynamodb
   .use(express.static(path.join(__dirname, 'public')))
@@ -45,9 +51,12 @@ app//homepage renders dynamodb
   .set('view engine', 'ejs')
   .get('/', function(req, res){//analyzes comments on spreadsheet
    scan.then(function(value) {
+   scanInsta.then(function(data){    
     res.render('pages/index', {
         ratingArray : value,
+        instagramArray : data,
     });
+   });    
    });
    });
 
@@ -75,12 +84,12 @@ function processComment(){
 csvPromise.then(function(value) {
    for(var i = 0; i < value.length; i++){
        var comment = value[i].comments;
-       analyzeInsta(comment);
+       analyze(comment);
    }
 });
 }
 
-function analyzeInsta(text){
+function analyze(text){
     AWS.config.update({
     accessKeyId: process.env.AWSKEY, 
     secretAccessKey:process.env.AWSSECRET, 
@@ -225,36 +234,29 @@ function onScan(err, data) {
 
 
 
-
 //INSTAGRAM EVERYTHING//////////
 
-
-///CSV FUNCTIONS////////
-
-
 var csvPromiseInsta = new Promise(function(resolve, reject) {     
-const csvFilePath='./instaComments.csv'
-const csv=require('csvtojson')
-csv()
-.fromFile(csvFilePath)
-.then((jsonObj)=>{
-resolve(jsonObj);
-})
+    const csvFilePath='./instaComments.csv'
+    const csv=require('csvtojson')
+    csv()
+    .fromFile(csvFilePath)
+    .then((jsonObj)=>{
+    resolve(jsonObj);
+    })
 });
 
-
-///AWS functions-Comprehend/////
-
 function processCommentInsta(){
-
 csvPromiseInsta.then(function(value) {
    for(var i = 0; i < value.length; i++){
        var comment = value[i].comments;
        analyzeInsta(comment);
    }
 });
+
 }
 
+//////AWS COMPREHEND////////////////
 function analyzeInsta(text){
     AWS.config.update({
     accessKeyId: process.env.AWSKEY, 
@@ -273,7 +275,7 @@ function analyzeInsta(text){
             console.log(jsonObj.SentimentScore.Mixed);
             console.log(String(text));
             console.log(jsonObj.Sentiment);
-            insert(jsonObj.SentimentScore.Mixed,text,jsonObj.Sentiment);//insert into database  
+            insertInsta(jsonObj.SentimentScore.Mixed,text,jsonObj.Sentiment);//insert into database  
     });
 }
 
@@ -345,12 +347,12 @@ docClient.put(params, function(err, data) {
 };
 
 
-
 var scanInsta = new Promise(function(resolve, reject) {  
     
 var ratingArray = [];
 var pos = 0;//pos count
 var neg = 0;//neg count
+var neutral = 0; //neutral or question
     
 var dynamo = require('dynamodb');
 var tableName = "instagram";
@@ -377,8 +379,11 @@ function onScan(err, data) {
            if(indComment.rating == 'POSITIVE'){
                pos++;
            }
-            else{
+            else if(indComment.rating == 'NEGATIVE'){
                 neg++;
+            }
+            else{
+                neutral++;
             }
         });
         // continue scanning if we have more movies, because
@@ -391,6 +396,7 @@ function onScan(err, data) {
     }
     ratingArray.push(pos);
     ratingArray.push(neg);
+    ratingArray.push(neutral);
     resolve(ratingArray);
 }
 

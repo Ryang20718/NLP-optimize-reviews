@@ -28,7 +28,8 @@ app.use(bodyParser.json());
 
 //enable CORS 
 app.use(cors())
-
+//table names are Vessel-NLP for facebook
+//table name for instagram is instagram
 
 
 
@@ -140,6 +141,7 @@ dynamodb.createTable(params, function(err, data) {
 });
 };
 
+
 function insert(random_num, cText,rate){//insert or update function
 var dynamo = require('dynamodb');
 var tableName = "Vessel-NLP";
@@ -150,7 +152,7 @@ dynamo.AWS.config.update({accessKeyId: process.env.AWSKEY,
 var dynamodb = new AWS.DynamoDB();
 var docClient = new AWS.DynamoDB.DocumentClient();
 var params = {
-    TableName:tableName,
+    TableName:'instagram',
     Item:{
         "num": random_num,
         "comment":cText,
